@@ -1,8 +1,9 @@
 # Solana Smart Money Cron Jobs
-# Format: minute hour day month weekday command
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
 
 # Hourly refresh of top 10k Solana smart money wallets (every hour at :00)
-0 * * * * cd /app && python worker_scheduled.py solana_smart_money_hourly >> /var/log/cron.log 2>&1
+0 * * * * cd /app && /usr/local/bin/python worker_scheduled.py solana_smart_money_hourly >> /var/log/cron.log 2>&1
 
 # Daily full refresh of 50k Solana smart money wallets (at 00:30 UTC)
-30 0 * * * cd /app && python worker_scheduled.py solana_smart_money_daily >> /var/log/cron.log 2>&1
+30 0 * * * cd /app && /usr/local/bin/python worker_scheduled.py solana_smart_money_daily >> /var/log/cron.log 2>&1
