@@ -96,8 +96,11 @@ class PostgresClient:
                 for m in metrics:
                     pnl_sol_7d = float(m.get('realized_pnl_sol_7d', 0))
                     pnl_sol_30d = float(m.get('realized_pnl_sol_30d', 0))
+                    wallet = m['wallet_address']
+                    if isinstance(wallet, bytes):
+                        wallet = wallet.decode('utf-8').rstrip('\x00')
                     values.append((
-                        m['wallet_address'],
+                        wallet,
                         int(m.get('transactions_7d', 0)),
                         int(m.get('buys_7d', 0)),
                         int(m.get('sells_7d', 0)),
