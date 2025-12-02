@@ -38,7 +38,7 @@ class PostgresClient:
         create_sql = f"""
         CREATE TABLE IF NOT EXISTS {self.TABLE_NAME} (
             id SERIAL PRIMARY KEY,
-            wallet_address VARCHAR(64) NOT NULL,
+            wallet_address VARCHAR(128) NOT NULL,
             transactions_7d INTEGER DEFAULT 0,
             buys_7d INTEGER DEFAULT 0,
             sells_7d INTEGER DEFAULT 0,
