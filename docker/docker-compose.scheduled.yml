@@ -18,12 +18,13 @@ services:
       dockerfile: docker/Dockerfile.scheduled
     container_name: solana-smart-money-debug
     env_file:
-      - .env
+      - ../.env
     volumes:
       - ../logs:/app/logs
     networks:
       - docker_token-network
-    entrypoint: ["python", "run.py", "--limit", "100"]
+    entrypoint: ["python"]
+    command: ["run.py", "--limit", "100"]
     profiles:
       - debug
 
