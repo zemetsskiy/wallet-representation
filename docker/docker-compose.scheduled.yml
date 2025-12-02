@@ -23,8 +23,6 @@ services:
       - ../logs:/app/logs
     networks:
       - docker_token-network
-    entrypoint: ["python"]
-    command: ["run.py", "--limit", "100"]
     profiles:
       - debug
 
