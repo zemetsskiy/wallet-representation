@@ -108,7 +108,7 @@ class SolanaSmartMoneyAnalyzer:
             GROUP BY signing_wallet
         )
         SELECT
-            toString(w.signing_wallet) AS wallet_address,
+            trimBoth(toString(w.signing_wallet), '\0') AS wallet_address,
             COALESCE(tc.tx_count_7d, 0) AS transactions_7d,
             COALESCE(w.total_buys_7d, 0) AS buys_7d,
             COALESCE(w.total_sells_7d, 0) AS sells_7d,
