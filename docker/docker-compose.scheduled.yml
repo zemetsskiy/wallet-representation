@@ -5,24 +5,8 @@ services:
       dockerfile: docker/Dockerfile.scheduled
     container_name: solana-smart-money-worker
     restart: unless-stopped
-    environment:
-      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST}
-      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-8123}
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
-      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
-      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-solana}
-      - POSTGRES_CONNECTION_STRING=${POSTGRES_CONNECTION_STRING:-}
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-wallet_metrics}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_DB=${REDIS_DB:-2}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - SOL_PRICE_KEY=${SOL_PRICE_KEY:-solana:price_usd}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    env_file:
+      - .env
     volumes:
       - ../logs:/app/logs
     networks:
@@ -33,24 +17,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.scheduled
     container_name: solana-smart-money-debug
-    environment:
-      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST}
-      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-8123}
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
-      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
-      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-solana}
-      - POSTGRES_CONNECTION_STRING=${POSTGRES_CONNECTION_STRING:-}
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-wallet_metrics}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_DB=${REDIS_DB:-2}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - SOL_PRICE_KEY=${SOL_PRICE_KEY:-solana:price_usd}
-      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+    env_file:
+      - .env
     volumes:
       - ../logs:/app/logs
     networks:
