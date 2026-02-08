@@ -47,6 +47,20 @@ JOB_CONFIGS = {
         'limit': 50000,
         'interval_minutes': 1440,
         'description': 'Polygon full 50k smart money (daily)'
+    },
+    'evm_base_smart_money_hourly': {
+        'type': 'evm',
+        'chain': 'base',
+        'limit': 10000,
+        'interval_minutes': 60,
+        'description': 'Base top 10k smart money (hourly)'
+    },
+    'evm_base_smart_money_daily': {
+        'type': 'evm',
+        'chain': 'base',
+        'limit': 50000,
+        'interval_minutes': 1440,
+        'description': 'Base full 50k smart money (daily)'
     }
 }
 

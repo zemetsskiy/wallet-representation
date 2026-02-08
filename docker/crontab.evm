@@ -8,8 +8,14 @@ PATH=/usr/local/bin:/usr/bin:/bin
 # Polygon Hourly at :45
 45 * * * * cd /app && /usr/local/bin/python worker_scheduled.py evm_polygon_smart_money_hourly >> /var/log/cron.log 2>&1
 
+# Base Hourly at :30 (to balance load)
+30 * * * * cd /app && /usr/local/bin/python worker_scheduled.py evm_base_smart_money_hourly >> /var/log/cron.log 2>&1
+
 # ETH Daily at 01:30
 30 1 * * * cd /app && /usr/local/bin/python worker_scheduled.py evm_eth_smart_money_daily >> /var/log/cron.log 2>&1
 
 # Polygon Daily at 02:30
 30 2 * * * cd /app && /usr/local/bin/python worker_scheduled.py evm_polygon_smart_money_daily >> /var/log/cron.log 2>&1
+
+# Base Daily at 03:30
+30 3 * * * cd /app && /usr/local/bin/python worker_scheduled.py evm_base_smart_money_daily >> /var/log/cron.log 2>&1

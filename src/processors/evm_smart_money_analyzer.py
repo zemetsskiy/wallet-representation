@@ -26,6 +26,14 @@ class EvmSmartMoneyAnalyzer:
                 '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619'  # WETH on Polygon
             ],
             'price_getter': 'get_matic_price'
+        },
+        'base': {
+            'native_tokens': [
+                '0x0000000000000000000000000000000000000000',
+                '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                '0x4200000000000000000000000000000000000006'  # WETH on Base
+            ],
+            'price_getter': 'get_eth_price'
         }
     }
 
