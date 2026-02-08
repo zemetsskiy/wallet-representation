@@ -11,6 +11,7 @@ class Config:
     CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', 'default')
     CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', '')
     CLICKHOUSE_DATABASE = os.getenv('CLICKHOUSE_DATABASE', 'solana')
+    CLICKHOUSE_DATABASE_EVM = os.getenv('CLICKHOUSE_DATABASE_EVM', 'evm')
 
     POSTGRES_CONNECTION_STRING = os.getenv('POSTGRES_CONNECTION_STRING', None)
     POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')

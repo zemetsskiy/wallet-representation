@@ -17,15 +17,16 @@ class ClickHouseClient:
     def _connect(self):
         try:
             host = Config.CLICKHOUSE_HOST_EVM if self.use_evm_host and Config.CLICKHOUSE_HOST_EVM else Config.CLICKHOUSE_HOST
+            database = Config.CLICKHOUSE_DATABASE_EVM if self.use_evm_host else Config.CLICKHOUSE_DATABASE
             
             self.client = clickhouse_connect.get_client(
                 host=host,
                 port=Config.CLICKHOUSE_PORT,
                 username=Config.CLICKHOUSE_USER,
                 password=Config.CLICKHOUSE_PASSWORD,
-                database=Config.CLICKHOUSE_DATABASE
+                database=database
             )
-            logger.info(f'Connected to ClickHouse at {host}:{Config.CLICKHOUSE_PORT}')
+            logger.info(f'Connected to ClickHouse at {host}:{Config.CLICKHOUSE_PORT} (DB: {database})')
         except Exception as e:
             logger.error(f'Failed to connect to ClickHouse: {e}')
             raise
