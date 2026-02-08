@@ -29,7 +29,7 @@ class Config:
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
     SOL_PRICE_KEY = os.getenv('SOL_PRICE_KEY', 'solana:price_usd')
     ETH_PRICE_KEY = os.getenv('ETH_PRICE_KEY', 'ethereum:price_usd')
-    MATIC_PRICE_KEY = os.getenv('MATIC_PRICE_KEY', 'polygon:price_usd')
+    MATIC_PRICE_KEY = os.getenv('MATIC_PRICE_KEY', 'matic:price_usd')
 
     SOL_ADDRESS = 'So11111111111111111111111111111111111111112'
     SOL_DECIMALS = 9
