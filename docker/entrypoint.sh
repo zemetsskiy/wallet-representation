@@ -1,17 +1,17 @@
 #!/bin/bash
 
 echo "============================================================"
-echo "SOLANA SMART MONEY WORKER - CRON SCHEDULER"
+echo "SMART MONEY WORKER - CRON SCHEDULER"
 echo "============================================================"
 echo "Started at: $(date -u '+%Y-%m-%d %H:%M:%S') UTC"
 echo ""
-echo "Schedule:"
-echo "  - solana_smart_money_hourly : every hour at :00 (10k wallets)"
-echo "  - solana_smart_money_daily  : daily at 00:30 UTC (50k wallets)"
+echo "Current Crontab Configuration:"
+cat /etc/cron.d/wallet-cron | grep -v "^#" | grep -v "^SHELL" | grep -v "^PATH" | grep -v "^$"
 echo ""
 echo "Waiting for scheduled jobs..."
 echo "============================================================"
 
+# Export environment variables for cron
 printenv > /etc/environment
 cron
 tail -f /var/log/cron.log
