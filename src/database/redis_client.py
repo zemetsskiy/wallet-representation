@@ -57,3 +57,37 @@ class RedisClient:
             raise
         except Exception as e:
             raise RedisPriceNotFoundError(f"Error fetching SOL price: {e}")
+
+    def get_eth_price(self) -> float:
+        if not self.enabled or not self.client:
+            raise RedisPriceNotFoundError("Redis client is not connected")
+
+        try:
+            price_str = self.client.get(Config.ETH_PRICE_KEY)
+            if price_str:
+                price = float(price_str)
+                logger.info(f"ETH price from Redis: ${price:.2f}")
+                return price
+            else:
+                raise RedisPriceNotFoundError(f"Key '{Config.ETH_PRICE_KEY}' not found in Redis")
+        except RedisPriceNotFoundError:
+            raise
+        except Exception as e:
+            raise RedisPriceNotFoundError(f"Error fetching ETH price: {e}")
+
+    def get_matic_price(self) -> float:
+        if not self.enabled or not self.client:
+            raise RedisPriceNotFoundError("Redis client is not connected")
+
+        try:
+            price_str = self.client.get(Config.MATIC_PRICE_KEY)
+            if price_str:
+                price = float(price_str)
+                logger.info(f"MATIC price from Redis: ${price:.2f}")
+                return price
+            else:
+                raise RedisPriceNotFoundError(f"Key '{Config.MATIC_PRICE_KEY}' not found in Redis")
+        except RedisPriceNotFoundError:
+            raise
+        except Exception as e:
+            raise RedisPriceNotFoundError(f"Error fetching MATIC price: {e}")

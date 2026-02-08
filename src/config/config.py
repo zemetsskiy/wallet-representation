@@ -6,6 +6,7 @@ load_dotenv()
 
 class Config:
     CLICKHOUSE_HOST = os.getenv('CLICKHOUSE_HOST', 'localhost')
+    CLICKHOUSE_HOST_EVM = os.getenv('CLICKHOUSE_HOST_EVM', None)
     CLICKHOUSE_PORT = int(os.getenv('CLICKHOUSE_PORT', '8123'))
     CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', 'default')
     CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', '')
@@ -26,6 +27,8 @@ class Config:
     REDIS_DB = int(os.getenv('REDIS_DB', '2'))
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
     SOL_PRICE_KEY = os.getenv('SOL_PRICE_KEY', 'solana:price_usd')
+    ETH_PRICE_KEY = os.getenv('ETH_PRICE_KEY', 'ethereum:price_usd')
+    MATIC_PRICE_KEY = os.getenv('MATIC_PRICE_KEY', 'polygon:price_usd')
 
     SOL_ADDRESS = 'So11111111111111111111111111111111111111112'
     SOL_DECIMALS = 9

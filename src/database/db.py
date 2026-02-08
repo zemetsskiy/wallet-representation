@@ -9,20 +9,23 @@ logger = logging.getLogger(__name__)
 
 class ClickHouseClient:
 
-    def __init__(self):
+    def __init__(self, use_evm_host: bool = False):
         self.client = None
+        self.use_evm_host = use_evm_host
         self._connect()
 
     def _connect(self):
         try:
+            host = Config.CLICKHOUSE_HOST_EVM if self.use_evm_host and Config.CLICKHOUSE_HOST_EVM else Config.CLICKHOUSE_HOST
+            
             self.client = clickhouse_connect.get_client(
-                host=Config.CLICKHOUSE_HOST,
+                host=host,
                 port=Config.CLICKHOUSE_PORT,
                 username=Config.CLICKHOUSE_USER,
                 password=Config.CLICKHOUSE_PASSWORD,
                 database=Config.CLICKHOUSE_DATABASE
             )
-            logger.info(f'Connected to ClickHouse at {Config.CLICKHOUSE_HOST}:{Config.CLICKHOUSE_PORT}')
+            logger.info(f'Connected to ClickHouse at {host}:{Config.CLICKHOUSE_PORT}')
         except Exception as e:
             logger.error(f'Failed to connect to ClickHouse: {e}')
             raise
@@ -58,10 +61,17 @@ class ClickHouseClient:
 
 
 _db_client = None
+_db_client_evm = None
 
 
-def get_db_client() -> ClickHouseClient:
-    global _db_client
-    if _db_client is None:
-        _db_client = ClickHouseClient()
-    return _db_client
+def get_db_client(use_evm_host: bool = False) -> ClickHouseClient:
+    global _db_client, _db_client_evm
+    
+    if use_evm_host:
+        if _db_client_evm is None:
+            _db_client_evm = ClickHouseClient(use_evm_host=True)
+        return _db_client_evm
+    else:
+        if _db_client is None:
+            _db_client = ClickHouseClient(use_evm_host=False)
+        return _db_client

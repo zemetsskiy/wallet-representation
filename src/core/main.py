@@ -1,25 +1,34 @@
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from ..config import setup_logging
-from ..processors import SolanaSmartMoneyAnalyzer
+from ..processors import SolanaSmartMoneyAnalyzer, EvmSmartMoneyAnalyzer
 
 logger = logging.getLogger(__name__)
 
 
-class SolanaSmartMoneyWorker:
+class SmartMoneyWorker:
 
     def __init__(self):
         setup_logging()
-        logger.info("SOLANA SMART MONEY WORKER INITIALIZED")
+        logger.info("SMART MONEY WORKER INITIALIZED")
         self.analyzer = None
 
-    def run(self, limit: int = 10000) -> Dict[str, Any]:
+    def run(self, job_type: str = 'solana', limit: int = 10000, chain: Optional[str] = None) -> Dict[str, Any]:
         start_time = time.time()
 
         try:
-            self.analyzer = SolanaSmartMoneyAnalyzer()
-            results = self.analyzer.analyze_smart_money(limit=limit)
+            if job_type == 'solana':
+                self.analyzer = SolanaSmartMoneyAnalyzer()
+                results = self.analyzer.analyze_smart_money(limit=limit)
+            elif job_type == 'evm':
+                if not chain:
+                    raise ValueError("Chain must be specified for EVM jobs")
+                self.analyzer = EvmSmartMoneyAnalyzer()
+                results = self.analyzer.analyze_smart_money(chain=chain, limit=limit)
+            else:
+                raise ValueError(f"Unknown job type: {job_type}")
+
             elapsed = time.time() - start_time
             results['elapsed_seconds'] = round(elapsed, 2)
             logger.info(f"Processing time: {elapsed:.2f}s")
@@ -33,8 +42,9 @@ class SolanaSmartMoneyWorker:
 
 
 def main():
-    worker = SolanaSmartMoneyWorker()
-    results = worker.run()
+    # Default to Solana for backward compatibility or testing
+    worker = SmartMoneyWorker()
+    results = worker.run(job_type='solana')
     logger.info(f"Results: {results}")
     return results
 

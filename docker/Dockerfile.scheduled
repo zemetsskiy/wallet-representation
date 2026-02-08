@@ -11,7 +11,8 @@ COPY src/ ./src/
 COPY run.py .
 COPY worker_scheduled.py .
 
-COPY docker/crontab /etc/cron.d/wallet-cron
+# Default crontab (can be overridden by volume mount)
+COPY docker/crontab.sol /etc/cron.d/wallet-cron
 COPY docker/entrypoint.sh /entrypoint.sh
 
 RUN chmod 0644 /etc/cron.d/wallet-cron && \

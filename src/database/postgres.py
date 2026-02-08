@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 class PostgresClient:
 
     TABLE_NAME = "smartmoney_sol"
+    EVM_TABLE_NAME = "smartmoney_evm"
 
     def __init__(self):
         self.conn = None
@@ -35,7 +36,7 @@ class PostgresClient:
             raise
 
     def _ensure_table(self):
-        create_sql = f"""
+        create_sol_sql = f"""
         CREATE TABLE IF NOT EXISTS {self.TABLE_NAME} (
             id SERIAL PRIMARY KEY,
             wallet_address VARCHAR(128) NOT NULL,
@@ -62,15 +63,121 @@ class PostgresClient:
         CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_winrate_30d ON {self.TABLE_NAME} (winrate_percent_30d DESC);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_created ON {self.TABLE_NAME} (created_at DESC);
         """
+
+        create_evm_sql = f"""
+        CREATE TABLE IF NOT EXISTS {self.EVM_TABLE_NAME} (
+            id SERIAL PRIMARY KEY,
+            chain VARCHAR(32) NOT NULL,
+            wallet_address VARCHAR(128) NOT NULL,
+            transactions_7d INTEGER DEFAULT 0,
+            buys_7d INTEGER DEFAULT 0,
+            sells_7d INTEGER DEFAULT 0,
+            unique_tokens_7d INTEGER DEFAULT 0,
+            realized_pnl_native_7d DOUBLE PRECISION DEFAULT 0,
+            realized_pnl_usd_7d DOUBLE PRECISION DEFAULT 0,
+            winrate_percent_7d DOUBLE PRECISION DEFAULT 0,
+            transactions_30d INTEGER DEFAULT 0,
+            buys_30d INTEGER DEFAULT 0,
+            sells_30d INTEGER DEFAULT 0,
+            unique_tokens_30d INTEGER DEFAULT 0,
+            realized_pnl_native_30d DOUBLE PRECISION DEFAULT 0,
+            realized_pnl_usd_30d DOUBLE PRECISION DEFAULT 0,
+            winrate_percent_30d DOUBLE PRECISION DEFAULT 0,
+            native_price_usd DOUBLE PRECISION DEFAULT 0,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_wallet ON {self.EVM_TABLE_NAME} (chain, wallet_address);
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_pnl_30d ON {self.EVM_TABLE_NAME} (chain, realized_pnl_usd_30d DESC);
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_pnl_7d ON {self.EVM_TABLE_NAME} (chain, realized_pnl_usd_7d DESC);
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_winrate_30d ON {self.EVM_TABLE_NAME} (chain, winrate_percent_30d DESC);
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_created ON {self.EVM_TABLE_NAME} (created_at DESC);
+        """
+
         try:
             with self.conn.cursor() as cur:
-                cur.execute(create_sql)
+                cur.execute(create_sol_sql)
+                cur.execute(create_evm_sql)
             self.conn.commit()
-            logger.info(f'Ensured table {self.TABLE_NAME} exists')
+            logger.info(f'Ensured tables {self.TABLE_NAME} and {self.EVM_TABLE_NAME} exist')
         except Exception as e:
             self.conn.rollback()
-            logger.error(f'Failed to create table: {e}')
+            logger.error(f'Failed to create tables: {e}')
             raise
+
+    def refresh_evm_smart_money(self, metrics: List[Dict[str, Any]], chain: str, native_price: float) -> int:
+        if not metrics:
+            logger.warning("No metrics to insert")
+            return 0
+
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT NOW()")
+                insert_timestamp = cur.fetchone()[0]
+
+                insert_sql = f"""
+                INSERT INTO {self.EVM_TABLE_NAME} (
+                    chain, wallet_address, transactions_7d, buys_7d, sells_7d, unique_tokens_7d,
+                    realized_pnl_native_7d, realized_pnl_usd_7d, winrate_percent_7d,
+                    transactions_30d, buys_30d, sells_30d, unique_tokens_30d,
+                    realized_pnl_native_30d, realized_pnl_usd_30d, winrate_percent_30d,
+                    native_price_usd, created_at
+                ) VALUES %s
+                """
+
+                values = []
+                for m in metrics:
+                    pnl_native_7d = float(m.get('realized_pnl_native_7d', 0))
+                    pnl_native_30d = float(m.get('realized_pnl_native_30d', 0))
+                    wallet = m['wallet_address']
+                    if isinstance(wallet, bytes):
+                        wallet = wallet.decode('utf-8').rstrip('\\x00')
+                    values.append((
+                        chain,
+                        wallet,
+                        int(m.get('transactions_7d', 0)),
+                        int(m.get('buys_7d', 0)),
+                        int(m.get('sells_7d', 0)),
+                        int(m.get('unique_tokens_7d', 0)),
+                        pnl_native_7d,
+                        pnl_native_7d * native_price,
+                        float(m.get('winrate_percent_7d', 0)),
+                        int(m.get('transactions_30d', 0)),
+                        int(m.get('buys_30d', 0)),
+                        int(m.get('sells_30d', 0)),
+                        int(m.get('unique_tokens_30d', 0)),
+                        pnl_native_30d,
+                        pnl_native_30d * native_price,
+                        float(m.get('winrate_percent_30d', 0)),
+                        native_price,
+                    ))
+
+                execute_values(
+                    cur, insert_sql, values,
+                    template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())"
+                )
+                logger.info(f'Inserted {len(metrics):,} fresh EVM smart money records for {chain}')
+
+                cur.execute(f"DELETE FROM {self.EVM_TABLE_NAME} WHERE chain = %s AND created_at < %s", (chain, insert_timestamp))
+                deleted_count = cur.rowcount
+                logger.info(f'Deleted {deleted_count:,} old records for {chain}')
+
+            self.conn.commit()
+            return len(metrics)
+
+        except Exception as e:
+            self.conn.rollback()
+            logger.error(f'Failed to refresh EVM smart money data: {e}')
+            raise
+
+    def get_evm_wallet_count(self, chain: str) -> int:
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(f"SELECT COUNT(*) FROM {self.EVM_TABLE_NAME} WHERE chain = %s", (chain,))
+                result = cur.fetchone()
+                return result[0] if result else 0
+        except Exception as e:
+            logger.error(f'Failed to get EVM wallet count: {e}')
+            return 0
 
     def refresh_smart_money(self, metrics: List[Dict[str, Any]], sol_price: float) -> int:
         if not metrics:

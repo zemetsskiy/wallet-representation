@@ -2,28 +2,58 @@ import sys
 import logging
 from datetime import datetime, timedelta
 from src.config import setup_logging
-from src.core import SolanaSmartMoneyWorker
+from src.core import SmartMoneyWorker
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 JOB_CONFIGS = {
     'solana_smart_money_hourly': {
+        'type': 'solana',
         'limit': 10000,
         'interval_minutes': 60,
         'description': 'Solana top 10k smart money (hourly)'
     },
     'solana_smart_money_daily': {
+        'type': 'solana',
         'limit': 50000,
         'interval_minutes': 1440,
         'description': 'Solana full 50k smart money (daily)'
+    },
+    'evm_eth_smart_money_hourly': {
+        'type': 'evm',
+        'chain': 'eth',
+        'limit': 10000,
+        'interval_minutes': 60,
+        'description': 'ETH top 10k smart money (hourly)'
+    },
+    'evm_eth_smart_money_daily': {
+        'type': 'evm',
+        'chain': 'eth',
+        'limit': 50000,
+        'interval_minutes': 1440,
+        'description': 'ETH full 50k smart money (daily)'
+    },
+    'evm_polygon_smart_money_hourly': {
+        'type': 'evm',
+        'chain': 'polygon',
+        'limit': 10000,
+        'interval_minutes': 60,
+        'description': 'Polygon top 10k smart money (hourly)'
+    },
+    'evm_polygon_smart_money_daily': {
+        'type': 'evm',
+        'chain': 'polygon',
+        'limit': 50000,
+        'interval_minutes': 1440,
+        'description': 'Polygon full 50k smart money (daily)'
     }
 }
 
 
 def calculate_next_run(job_name: str) -> datetime:
     now = datetime.utcnow()
-    if job_name == 'solana_smart_money_daily':
+    if 'daily' in job_name:
         next_run = now.replace(hour=0, minute=30, second=0, microsecond=0)
         if next_run <= now:
             next_run += timedelta(days=1)
@@ -55,8 +85,12 @@ def run_job(job_name: str) -> int:
     log_schedule_info(job_name, is_start=True)
 
     try:
-        worker = SolanaSmartMoneyWorker()
-        results = worker.run(limit=config['limit'])
+        worker = SmartMoneyWorker()
+        results = worker.run(
+            job_type=config.get('type', 'solana'),
+            limit=config['limit'],
+            chain=config.get('chain')
+        )
         log_schedule_info(job_name, is_start=False)
         logger.info(f"Results: {results}")
         return 0

@@ -9,6 +9,21 @@ services:
       - .env
     volumes:
       - ../logs:/app/logs
+      - ./crontab.sol:/etc/cron.d/wallet-cron
+    networks:
+      - docker_token-network
+
+  evm-smart-money-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.scheduled
+    container_name: evm-smart-money-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ../logs:/app/logs
+      - ./crontab.evm:/etc/cron.d/wallet-cron
     networks:
       - docker_token-network
 

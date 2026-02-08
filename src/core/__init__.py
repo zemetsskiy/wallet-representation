@@ -1,3 +1,3 @@
-from .main import SolanaSmartMoneyWorker
+from .main import SmartMoneyWorker
 
-__all__ = ['SolanaSmartMoneyWorker']
+__all__ = ['SmartMoneyWorker']
