@@ -159,7 +159,7 @@ class EvmSmartMoneyAnalyzer:
         """
         return query
 
-    def analyze_smart_money(self, chain: str, limit: int = 10000) -> Dict[str, Any]:
+    def analyze_smart_money(self, chain: str, limit: int = 10000, refresh_type: str = 'hourly') -> Dict[str, Any]:
         if chain not in self.CHAIN_CONFIG:
             raise ValueError(f"Unsupported chain: {chain}")
 
@@ -192,7 +192,7 @@ class EvmSmartMoneyAnalyzer:
             return {'wallets_processed': 0, 'native_price_usd': native_price, 'wallets_stored': 0}
 
         try:
-            stored_count = self.postgres.refresh_evm_smart_money(metrics, chain, native_price)
+            stored_count = self.postgres.refresh_evm_smart_money(metrics, chain, native_price, refresh_type=refresh_type)
         except Exception as e:
             logger.error(f"Failed to refresh data: {e}")
             raise

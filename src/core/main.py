@@ -14,18 +14,18 @@ class SmartMoneyWorker:
         logger.info("SMART MONEY WORKER INITIALIZED")
         self.analyzer = None
 
-    def run(self, job_type: str = 'solana', limit: int = 10000, chain: Optional[str] = None) -> Dict[str, Any]:
+    def run(self, job_type: str = 'solana', limit: int = 10000, chain: Optional[str] = None, refresh_type: str = 'hourly') -> Dict[str, Any]:
         start_time = time.time()
 
         try:
             if job_type == 'solana':
                 self.analyzer = SolanaSmartMoneyAnalyzer()
-                results = self.analyzer.analyze_smart_money(limit=limit)
+                results = self.analyzer.analyze_smart_money(limit=limit, refresh_type=refresh_type)
             elif job_type == 'evm':
                 if not chain:
                     raise ValueError("Chain must be specified for EVM jobs")
                 self.analyzer = EvmSmartMoneyAnalyzer()
-                results = self.analyzer.analyze_smart_money(chain=chain, limit=limit)
+                results = self.analyzer.analyze_smart_money(chain=chain, limit=limit, refresh_type=refresh_type)
             else:
                 raise ValueError(f"Unknown job type: {job_type}")
 

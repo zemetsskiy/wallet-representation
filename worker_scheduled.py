@@ -99,11 +99,13 @@ def run_job(job_name: str) -> int:
     log_schedule_info(job_name, is_start=True)
 
     try:
+        refresh_type = 'daily' if 'daily' in job_name else 'hourly'
         worker = SmartMoneyWorker()
         results = worker.run(
             job_type=config.get('type', 'solana'),
             limit=config['limit'],
-            chain=config.get('chain')
+            chain=config.get('chain'),
+            refresh_type=refresh_type,
         )
         log_schedule_info(job_name, is_start=False)
         logger.info(f"Results: {results}")

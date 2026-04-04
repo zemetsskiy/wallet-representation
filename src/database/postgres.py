@@ -55,9 +55,11 @@ class PostgresClient:
             realized_pnl_usd_30d DOUBLE PRECISION DEFAULT 0,
             winrate_percent_30d DOUBLE PRECISION DEFAULT 0,
             sol_price_usd DOUBLE PRECISION DEFAULT 0,
+            refresh_type VARCHAR(16) DEFAULT 'hourly',
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
         CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_wallet ON {self.TABLE_NAME} (wallet_address);
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_refresh_type ON {self.TABLE_NAME} (refresh_type);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_pnl_30d ON {self.TABLE_NAME} (realized_pnl_usd_30d DESC);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_pnl_7d ON {self.TABLE_NAME} (realized_pnl_usd_7d DESC);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_sol_winrate_30d ON {self.TABLE_NAME} (winrate_percent_30d DESC);
@@ -84,9 +86,11 @@ class PostgresClient:
             realized_pnl_usd_30d DOUBLE PRECISION DEFAULT 0,
             winrate_percent_30d DOUBLE PRECISION DEFAULT 0,
             native_price_usd DOUBLE PRECISION DEFAULT 0,
+            refresh_type VARCHAR(16) DEFAULT 'hourly',
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
         CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_wallet ON {self.EVM_TABLE_NAME} (chain, wallet_address);
+        CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_refresh_type ON {self.EVM_TABLE_NAME} (refresh_type);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_pnl_30d ON {self.EVM_TABLE_NAME} (chain, realized_pnl_usd_30d DESC);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_pnl_7d ON {self.EVM_TABLE_NAME} (chain, realized_pnl_usd_7d DESC);
         CREATE INDEX IF NOT EXISTS idx_smartmoney_evm_chain_winrate_30d ON {self.EVM_TABLE_NAME} (chain, winrate_percent_30d DESC);
@@ -104,7 +108,7 @@ class PostgresClient:
             logger.error(f'Failed to create tables: {e}')
             raise
 
-    def refresh_evm_smart_money(self, metrics: List[Dict[str, Any]], chain: str, native_price: float) -> int:
+    def refresh_evm_smart_money(self, metrics: List[Dict[str, Any]], chain: str, native_price: float, refresh_type: str = 'hourly') -> int:
         if not metrics:
             logger.warning("No metrics to insert")
             return 0
@@ -120,7 +124,7 @@ class PostgresClient:
                     realized_pnl_native_7d, realized_pnl_usd_7d, winrate_percent_7d,
                     transactions_30d, buys_30d, sells_30d, unique_tokens_30d,
                     realized_pnl_native_30d, realized_pnl_usd_30d, winrate_percent_30d,
-                    native_price_usd, created_at
+                    native_price_usd, refresh_type, created_at
                 ) VALUES %s
                 """
 
@@ -149,17 +153,18 @@ class PostgresClient:
                         pnl_native_30d * native_price,
                         float(m.get('winrate_percent_30d', 0)),
                         native_price,
+                        refresh_type,
                     ))
 
                 execute_values(
                     cur, insert_sql, values,
-                    template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())"
+                    template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())"
                 )
-                logger.info(f'Inserted {len(metrics):,} fresh EVM smart money records for {chain}')
+                logger.info(f'Inserted {len(metrics):,} fresh EVM smart money records for {chain} ({refresh_type})')
 
-                cur.execute(f"DELETE FROM {self.EVM_TABLE_NAME} WHERE chain = %s AND created_at < %s", (chain, insert_timestamp))
+                cur.execute(f"DELETE FROM {self.EVM_TABLE_NAME} WHERE chain = %s AND refresh_type = %s AND created_at < %s", (chain, refresh_type, insert_timestamp))
                 deleted_count = cur.rowcount
-                logger.info(f'Deleted {deleted_count:,} old records for {chain}')
+                logger.info(f'Deleted {deleted_count:,} old {refresh_type} records for {chain}')
 
             self.conn.commit()
             return len(metrics)
@@ -179,7 +184,7 @@ class PostgresClient:
             logger.error(f'Failed to get EVM wallet count: {e}')
             return 0
 
-    def refresh_smart_money(self, metrics: List[Dict[str, Any]], sol_price: float) -> int:
+    def refresh_smart_money(self, metrics: List[Dict[str, Any]], sol_price: float, refresh_type: str = 'hourly') -> int:
         if not metrics:
             logger.warning("No metrics to insert")
             return 0
@@ -195,7 +200,7 @@ class PostgresClient:
                     realized_pnl_sol_7d, realized_pnl_usd_7d, winrate_percent_7d,
                     transactions_30d, buys_30d, sells_30d, unique_tokens_30d,
                     realized_pnl_sol_30d, realized_pnl_usd_30d, winrate_percent_30d,
-                    sol_price_usd, created_at
+                    sol_price_usd, refresh_type, created_at
                 ) VALUES %s
                 """
 
@@ -223,17 +228,18 @@ class PostgresClient:
                         pnl_sol_30d * sol_price,
                         float(m.get('winrate_percent_30d', 0)),
                         sol_price,
+                        refresh_type,
                     ))
 
                 execute_values(
                     cur, insert_sql, values,
-                    template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())"
+                    template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())"
                 )
-                logger.info(f'Inserted {len(metrics):,} fresh smart money records')
+                logger.info(f'Inserted {len(metrics):,} fresh smart money records ({refresh_type})')
 
-                cur.execute(f"DELETE FROM {self.TABLE_NAME} WHERE created_at < %s", (insert_timestamp,))
+                cur.execute(f"DELETE FROM {self.TABLE_NAME} WHERE refresh_type = %s AND created_at < %s", (refresh_type, insert_timestamp))
                 deleted_count = cur.rowcount
-                logger.info(f'Deleted {deleted_count:,} old records')
+                logger.info(f'Deleted {deleted_count:,} old {refresh_type} records')
 
             self.conn.commit()
             return len(metrics)

@@ -128,7 +128,7 @@ class SolanaSmartMoneyAnalyzer:
         """
         return query.format(limit=limit)
 
-    def analyze_smart_money(self, limit: int = 10000) -> Dict[str, Any]:
+    def analyze_smart_money(self, limit: int = 10000, refresh_type: str = 'hourly') -> Dict[str, Any]:
         logger.info("=" * 60)
         logger.info("SOLANA SMART MONEY ANALYSIS")
         logger.info("=" * 60)
@@ -155,7 +155,7 @@ class SolanaSmartMoneyAnalyzer:
             return {'wallets_processed': 0, 'sol_price_usd': sol_price, 'wallets_stored': 0}
 
         try:
-            stored_count = self.postgres.refresh_smart_money(metrics, sol_price)
+            stored_count = self.postgres.refresh_smart_money(metrics, sol_price, refresh_type=refresh_type)
         except Exception as e:
             logger.error(f"Failed to refresh data: {e}")
             raise
